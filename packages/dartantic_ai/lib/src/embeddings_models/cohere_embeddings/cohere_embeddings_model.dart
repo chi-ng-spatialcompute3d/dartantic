@@ -4,7 +4,6 @@ import 'package:dartantic_interface/dartantic_interface.dart';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 
-import '../../retry_http_client.dart';
 import '../chunk_list.dart';
 import 'cohere_embeddings_model_options.dart';
 
@@ -31,7 +30,7 @@ class CohereEmbeddingsModel
        _embeddingTypes = embeddingTypes,
        _inputType = inputType,
        _ownsHttpClient = client == null,
-       _httpClient = client ?? RetryHttpClient(inner: http.Client()) {
+       _httpClient = client ?? http.Client() {
     _logger.info(
       'Created Cohere embeddings model: $name '
       '(dimensions: $dimensions, batchSize: $batchSize)',

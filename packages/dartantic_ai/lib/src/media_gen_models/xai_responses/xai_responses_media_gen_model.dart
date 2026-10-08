@@ -9,7 +9,6 @@ import 'package:meta/meta.dart';
 import 'package:mime/mime.dart';
 
 import '../../chat_models/chat_utils.dart';
-import '../../retry_http_client.dart';
 import 'xai_responses_media_gen_model_options.dart';
 
 /// Media generation model built on top of xAI Images API endpoints.
@@ -27,7 +26,7 @@ class XAIResponsesMediaGenerationModel
   }) : _apiKey = apiKey,
        _baseUrl = baseUrl ?? Uri.parse('https://api.x.ai/v1'),
        _ownsHttpClient = httpClient == null,
-       _client = httpClient ?? RetryHttpClient(inner: http.Client()),
+       _client = httpClient ?? http.Client(),
        _headers = headers ?? const {};
 
   static final Logger _logger = Logger('dartantic.media.models.xai_responses');

@@ -7,7 +7,6 @@ import 'package:logging/logging.dart';
 import '../chat_models/cohere_chat/cohere_chat_model.dart';
 import '../chat_models/cohere_chat/cohere_chat_options.dart';
 import '../platform/platform.dart';
-import '../retry_http_client.dart';
 import 'openai_provider.dart';
 
 /// Provider for Cohere OpenAI-compatible API.
@@ -97,7 +96,7 @@ class CohereProvider extends OpenAIProvider {
     final url = Uri.parse('https://docs.cohere.com/docs/models');
     _logger.info('Fetching models from Cohere docs: $url');
     final ownsClient = httpClient == null;
-    final client = httpClient ?? RetryHttpClient(inner: http.Client());
+    final client = httpClient ?? http.Client();
     try {
       final response = await client.get(url);
       if (response.statusCode != 200) {

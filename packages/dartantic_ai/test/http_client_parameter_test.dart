@@ -10,6 +10,7 @@
 
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/retry.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -69,6 +70,19 @@ void main() {
       final tracking = TrackingHttpClient();
       final provider = OllamaProvider(httpClient: tracking);
       expect(provider.httpClient, same(tracking));
+    });
+
+    test('http.RetryClient is passed through unwrapped', () {
+      final retryClient = RetryClient(
+        http.Client(),
+        retries: 3,
+        when: (response) => response.statusCode == 429,
+      );
+      final provider = GoogleProvider(
+        apiKey: 'test-api-key',
+        httpClient: retryClient,
+      );
+      expect(provider.httpClient, same(retryClient));
     });
   });
 }

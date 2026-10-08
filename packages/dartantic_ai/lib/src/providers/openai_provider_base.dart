@@ -33,6 +33,11 @@ abstract class OpenAIProviderBase<
   /// When supplied, the caller retains ownership of the client's lifecycle.
   /// When `null`, providers use a default client internally and own its
   /// lifecycle.
+  ///
+  /// The client is used as-is — dartantic does not add any transport
+  /// layer (retry, abort, etc.) on top of it. For retry-on-429, wrap
+  /// with `RetryClient` from `package:http/retry.dart`. For cancellation,
+  /// use the `AbortHttpClient` in `lib/src/abortable_http_client.dart`.
   final http.Client? httpClient;
 
   /// Logger used by subclasses for shared operations.

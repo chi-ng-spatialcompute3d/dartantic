@@ -4,7 +4,6 @@ import 'package:logging/logging.dart';
 import 'package:openai_dart/openai_dart.dart'
     hide ChatMessage, FinishReason, Tool;
 
-import '../../retry_http_client.dart';
 import 'openai_chat_options.dart';
 import 'openai_message_mappers.dart';
 import 'openai_message_mappers_helpers.dart';
@@ -23,9 +22,7 @@ class OpenAIChatModel extends ChatModel<OpenAIChatOptions> {
     Uri? baseUrl,
     Map<String, String>? headers,
     http.Client? client,
-  }) : _httpClientWrapper = client ?? RetryHttpClient(inner: http.Client()),
-       _ownsHttpClientWrapper = client == null,
-       _isTogetherAI =
+  }) : _isTogetherAI =
            baseUrl?.toString().toLowerCase().contains('together.xyz') ?? false,
        super(
          defaultOptions: defaultOptions ?? const OpenAIChatOptions(),
@@ -39,7 +36,7 @@ class OpenAIChatModel extends ChatModel<OpenAIChatOptions> {
         defaultHeaders: headers ?? const {},
         retryPolicy: const RetryPolicy(maxRetries: 0),
       ),
-      httpClient: _httpClientWrapper,
+      httpClient: client,
     );
 
     // Validate that providers with known tool limitations don't use tools
@@ -58,8 +55,6 @@ class OpenAIChatModel extends ChatModel<OpenAIChatOptions> {
   static final Logger _logger = Logger('dartantic.chat.models.openai');
 
   late final OpenAIClient _client;
-  final http.Client _httpClientWrapper;
-  final bool _ownsHttpClientWrapper;
   final bool _isTogetherAI;
 
   @override
@@ -203,6 +198,5 @@ class OpenAIChatModel extends ChatModel<OpenAIChatOptions> {
   @override
   void dispose() {
     _client.close();
-    if (_ownsHttpClientWrapper) _httpClientWrapper.close();
   }
 }

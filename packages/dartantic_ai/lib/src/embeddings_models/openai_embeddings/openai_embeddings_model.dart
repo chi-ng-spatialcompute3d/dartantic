@@ -4,7 +4,6 @@ import 'package:logging/logging.dart';
 import 'package:openai_dart/openai_dart.dart'
     hide ChatMessage, FinishReason, Tool;
 
-import '../../retry_http_client.dart';
 import '../chunk_list.dart';
 import 'openai_embeddings_model_options.dart';
 
@@ -22,9 +21,7 @@ class OpenAIEmbeddingsModel
     super.batchSize = 512,
     String? user,
     OpenAIEmbeddingsModelOptions? options,
-  }) : _httpClientWrapper = client ?? RetryHttpClient(inner: http.Client()),
-       _ownsHttpClientWrapper = client == null,
-       _user = user,
+  }) : _user = user,
        super(
          defaultOptions:
              options ??
@@ -41,7 +38,7 @@ class OpenAIEmbeddingsModel
         defaultHeaders: headers ?? const {},
         retryPolicy: const RetryPolicy(maxRetries: 0),
       ),
-      httpClient: _httpClientWrapper,
+      httpClient: client,
     );
     _logger.info(
       'Created OpenAI embeddings model: $name '
@@ -51,8 +48,6 @@ class OpenAIEmbeddingsModel
   static final _logger = Logger('dartantic.embeddings.models.openai');
 
   late final OpenAIClient _client;
-  final http.Client _httpClientWrapper;
-  final bool _ownsHttpClientWrapper;
   final String? _user;
 
   @override
@@ -201,6 +196,5 @@ class OpenAIEmbeddingsModel
   @override
   void dispose() {
     _client.close();
-    if (_ownsHttpClientWrapper) _httpClientWrapper.close();
   }
 }

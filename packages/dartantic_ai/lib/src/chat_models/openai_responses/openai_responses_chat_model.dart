@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:openai_dart/openai_dart.dart' as openai;
 
-import '../../retry_http_client.dart';
 import '../../shared/openai_utils.dart';
 import 'openai_responses_chat_options.dart';
 import 'openai_responses_event_mapper.dart';
@@ -25,9 +24,7 @@ class OpenAIResponsesChatModel
     this.apiKey,
     http.Client? httpClient,
     Map<String, String>? headers,
-  }) : _httpClientWrapper = httpClient ?? RetryHttpClient(inner: http.Client()),
-       _ownsHttpClientWrapper = httpClient == null,
-       super() {
+  }) : super() {
     // Capture fields into locals so Dart can promote nullability for the
     // null-check pattern used by the SDK config.
     final key = apiKey;
@@ -39,7 +36,7 @@ class OpenAIResponsesChatModel
         defaultHeaders: headers ?? const {},
         retryPolicy: const openai.RetryPolicy(maxRetries: 0),
       ),
-      httpClient: _httpClientWrapper,
+      httpClient: httpClient,
     );
   }
 
@@ -48,8 +45,6 @@ class OpenAIResponsesChatModel
   );
 
   late final openai.OpenAIClient _client;
-  final http.Client _httpClientWrapper;
-  final bool _ownsHttpClientWrapper;
 
   /// Base URL override for the OpenAI API.
   final Uri? baseUrl;
@@ -95,7 +90,6 @@ class OpenAIResponsesChatModel
   @override
   void dispose() {
     _client.close();
-    if (_ownsHttpClientWrapper) _httpClientWrapper.close();
   }
 
   /// Downloads a file from a code interpreter container.
