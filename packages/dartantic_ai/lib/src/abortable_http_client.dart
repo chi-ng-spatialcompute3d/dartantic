@@ -21,6 +21,37 @@ import 'package:http/http.dart' as http;
 /// aborting requests. `IOClient` and `RetryClient` do; some clients
 /// (e.g. `BrowserClient`) may not.
 ///
+/// ## Combining abort with retry
+///
+/// To get both abort and retry, compose this client with
+/// `package:http`'s [RetryClient]. **Abort must be the outer layer**
+/// so that `RetryClient` never sees the abort as a failure it should
+/// retry:
+///
+/// ```dart
+/// import 'package:http/http.dart' as http;
+/// import 'package:http/retry.dart';
+///
+/// final client = AbortHttpClient(
+///   inner: RetryClient(
+///     http.Client(),
+///     retries: 3,
+///     when: (response) => response.statusCode == 429,
+///   ),
+///   name: 'gemini',
+/// );
+///
+/// // To abort the current turn:
+/// client.abort();
+///
+/// // When done with the client entirely:
+/// client.close();
+/// ```
+///
+/// `RetryClient` explicitly recognizes `RequestAbortedException` and
+/// will not retry an aborted request, so the outer abort layer is
+/// sufficient to guarantee prompt cancellation.
+///
 /// ## Ownership of [inner]
 ///
 /// - If [inner] is **omitted**, a default `http.Client()` is created
