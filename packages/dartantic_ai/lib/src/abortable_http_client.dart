@@ -17,14 +17,14 @@ import 'package:http/http.dart' as http;
 /// deliberate: silently dropping the abort trigger would produce a
 /// request that looks abortable but isn't.
 ///
-/// The [abortTrigger] is only honored if the inner client supports
+/// The abort trigger is only honored if the inner client supports
 /// aborting requests. `IOClient` and `RetryClient` do; some clients
 /// (e.g. `BrowserClient`) may not.
 ///
 /// ## Combining abort with retry
 ///
 /// To get both abort and retry, compose this client with
-/// `package:http`'s [RetryClient]. **Abort must be the outer layer**
+/// `package:http`'s `RetryClient`. **Abort must be the outer layer**
 /// so that `RetryClient` never sees the abort as a failure it should
 /// retry:
 ///
@@ -52,15 +52,15 @@ import 'package:http/http.dart' as http;
 /// will not retry an aborted request, so the outer abort layer is
 /// sufficient to guarantee prompt cancellation.
 ///
-/// ## Ownership of [inner]
+/// ## Ownership of `inner`
 ///
-/// - If [inner] is **omitted**, a default `http.Client()` is created
+/// - If `inner` is **omitted**, a default `http.Client()` is created
 ///   internally and this client owns it.
-/// - If [inner] is **provided**, ownership depends on [transferInner]:
-///   - When [transferInner] is `null` (default), the caller retains
-///     ownership. This client will not close [inner].
-///   - When [transferInner] is `true`, ownership is transferred to
-///     this client. [close] will close [inner], and the caller must
+/// - If `inner` is **provided**, ownership depends on `transferInner`:
+///   - When `transferInner` is `null` (default), the caller retains
+///     ownership. This client will not close `inner`.
+///   - When `transferInner` is `true`, ownership is transferred to
+///     this client. `close` will close `inner`, and the caller must
 ///     not use it afterward.
 class AbortHttpClient extends http.BaseClient {
   /// Creates a new [AbortHttpClient].
