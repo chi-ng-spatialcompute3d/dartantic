@@ -32,19 +32,29 @@ class XAIResponsesChatModel extends ChatModel<XAIResponsesChatModelOptions> {
     this.apiKey,
     http.Client? httpClient,
     Map<String, String>? headers,
-  }) : _client = openai.OpenAIClient(
-         config: openai.OpenAIConfig(
-           authProvider: apiKey != null ? openai.ApiKeyProvider(apiKey) : null,
-           baseUrl: baseUrl?.toString() ?? 'https://api.x.ai/v1',
-           defaultHeaders: headers ?? const {},
-           retryPolicy: const openai.RetryPolicy(maxRetries: 0),
-         ),
-         httpClient: RetryHttpClient(inner: httpClient ?? http.Client()),
-       );
+  }) : _httpClientWrapper = httpClient ?? RetryHttpClient(inner: http.Client()),
+       _ownsHttpClientWrapper = httpClient == null,
+       super() {
+    // Capture fields into locals so Dart can promote nullability for the
+    // null-check pattern used by the SDK config.
+    final key = apiKey;
+    final url = baseUrl;
+    _client = openai.OpenAIClient(
+      config: openai.OpenAIConfig(
+        authProvider: key != null ? openai.ApiKeyProvider(key) : null,
+        baseUrl: url?.toString() ?? 'https://api.x.ai/v1',
+        defaultHeaders: headers ?? const {},
+        retryPolicy: const openai.RetryPolicy(maxRetries: 0),
+      ),
+      httpClient: _httpClientWrapper,
+    );
+  }
 
   static final Logger _logger = Logger('dartantic.chat.models.xai_responses');
 
-  final openai.OpenAIClient _client;
+  late final openai.OpenAIClient _client;
+  final http.Client _httpClientWrapper;
+  final bool _ownsHttpClientWrapper;
 
   /// Base URL override for the xAI API.
   final Uri? baseUrl;
@@ -111,7 +121,10 @@ class XAIResponsesChatModel extends ChatModel<XAIResponsesChatModelOptions> {
   }
 
   @override
-  void dispose() => _client.close();
+  void dispose() {
+    _client.close();
+    if (_ownsHttpClientWrapper) _httpClientWrapper.close();
+  }
 
   Future<ContainerFileData> _downloadContainerFile(
     String containerId,

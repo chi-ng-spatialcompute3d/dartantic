@@ -26,7 +26,8 @@ class XAIResponsesMediaGenerationModel
     super.tools,
   }) : _apiKey = apiKey,
        _baseUrl = baseUrl ?? Uri.parse('https://api.x.ai/v1'),
-       _client = RetryHttpClient(inner: httpClient ?? http.Client()),
+       _ownsHttpClient = httpClient == null,
+       _client = httpClient ?? RetryHttpClient(inner: http.Client()),
        _headers = headers ?? const {};
 
   static final Logger _logger = Logger('dartantic.media.models.xai_responses');
@@ -34,6 +35,7 @@ class XAIResponsesMediaGenerationModel
   final String _apiKey;
   final Uri _baseUrl;
   final http.Client _client;
+  final bool _ownsHttpClient;
   final Map<String, String> _headers;
 
   @override
@@ -261,7 +263,9 @@ class XAIResponsesMediaGenerationModel
   }
 
   @override
-  void dispose() => _client.close();
+  void dispose() {
+    if (_ownsHttpClient) _client.close();
+  }
 
   @visibleForTesting
   /// Test-only hook to map a chunk-like result without invoking the network.

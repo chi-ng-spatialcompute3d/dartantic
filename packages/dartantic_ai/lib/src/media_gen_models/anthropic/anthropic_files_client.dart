@@ -17,6 +17,7 @@ class AnthropicFilesClient {
     Map<String, String>? headers,
   }) : _betaHeader = _composeBetaHeader(betaFeatures),
        _baseUri = baseUrl ?? Uri.parse('https://api.anthropic.com/'),
+       _ownsClient = client == null,
        _client = client ?? RetryHttpClient(inner: http.Client()),
        _customHeaders = headers ?? const {};
 
@@ -27,6 +28,7 @@ class AnthropicFilesClient {
   final String _betaHeader;
   final Uri _baseUri;
   final http.Client _client;
+  final bool _ownsClient;
   final Map<String, String> _customHeaders;
 
   static String _composeBetaHeader(List<String> features) {
@@ -138,7 +140,7 @@ class AnthropicFilesClient {
 
   /// Releases the underlying HTTP client.
   void close() {
-    _client.close();
+    if (_ownsClient) _client.close();
   }
 }
 

@@ -25,21 +25,31 @@ class OpenAIResponsesChatModel
     this.apiKey,
     http.Client? httpClient,
     Map<String, String>? headers,
-  }) : _client = openai.OpenAIClient(
-         config: openai.OpenAIConfig(
-           authProvider: apiKey != null ? openai.ApiKeyProvider(apiKey) : null,
-           baseUrl: baseUrl?.toString() ?? 'https://api.openai.com/v1',
-           defaultHeaders: headers ?? const {},
-           retryPolicy: const openai.RetryPolicy(maxRetries: 0),
-         ),
-         httpClient: RetryHttpClient(inner: httpClient ?? http.Client()),
-       );
+  }) : _httpClientWrapper = httpClient ?? RetryHttpClient(inner: http.Client()),
+       _ownsHttpClientWrapper = httpClient == null,
+       super() {
+    // Capture fields into locals so Dart can promote nullability for the
+    // null-check pattern used by the SDK config.
+    final key = apiKey;
+    final url = baseUrl;
+    _client = openai.OpenAIClient(
+      config: openai.OpenAIConfig(
+        authProvider: key != null ? openai.ApiKeyProvider(key) : null,
+        baseUrl: url?.toString() ?? 'https://api.openai.com/v1',
+        defaultHeaders: headers ?? const {},
+        retryPolicy: const openai.RetryPolicy(maxRetries: 0),
+      ),
+      httpClient: _httpClientWrapper,
+    );
+  }
 
   static final Logger _logger = Logger(
     'dartantic.chat.models.openai_responses',
   );
 
-  final openai.OpenAIClient _client;
+  late final openai.OpenAIClient _client;
+  final http.Client _httpClientWrapper;
+  final bool _ownsHttpClientWrapper;
 
   /// Base URL override for the OpenAI API.
   final Uri? baseUrl;
@@ -83,7 +93,10 @@ class OpenAIResponsesChatModel
   }
 
   @override
-  void dispose() => _client.close();
+  void dispose() {
+    _client.close();
+    if (_ownsHttpClientWrapper) _httpClientWrapper.close();
+  }
 
   /// Downloads a file from a code interpreter container.
   ///

@@ -22,17 +22,8 @@ class OpenAIEmbeddingsModel
     super.batchSize = 512,
     String? user,
     OpenAIEmbeddingsModelOptions? options,
-  }) : _client = OpenAIClient(
-         config: OpenAIConfig(
-           authProvider: apiKey != null ? ApiKeyProvider(apiKey) : null,
-           baseUrl: baseUrl?.toString() ?? 'https://api.openai.com/v1',
-           defaultHeaders: headers ?? const {},
-           retryPolicy: const RetryPolicy(maxRetries: 0),
-         ),
-         httpClient: client != null
-             ? RetryHttpClient(inner: client)
-             : RetryHttpClient(inner: http.Client()),
-       ),
+  }) : _httpClientWrapper = client ?? RetryHttpClient(inner: http.Client()),
+       _ownsHttpClientWrapper = client == null,
        _user = user,
        super(
          defaultOptions:
@@ -43,6 +34,15 @@ class OpenAIEmbeddingsModel
                user: user,
              ),
        ) {
+    _client = OpenAIClient(
+      config: OpenAIConfig(
+        authProvider: apiKey != null ? ApiKeyProvider(apiKey) : null,
+        baseUrl: baseUrl?.toString() ?? 'https://api.openai.com/v1',
+        defaultHeaders: headers ?? const {},
+        retryPolicy: const RetryPolicy(maxRetries: 0),
+      ),
+      httpClient: _httpClientWrapper,
+    );
     _logger.info(
       'Created OpenAI embeddings model: $name '
       '(dimensions: $dimensions, batchSize: $batchSize)',
@@ -50,7 +50,9 @@ class OpenAIEmbeddingsModel
   }
   static final _logger = Logger('dartantic.embeddings.models.openai');
 
-  final OpenAIClient _client;
+  late final OpenAIClient _client;
+  final http.Client _httpClientWrapper;
+  final bool _ownsHttpClientWrapper;
   final String? _user;
 
   @override
@@ -197,5 +199,8 @@ class OpenAIEmbeddingsModel
   }
 
   @override
-  void dispose() => _client.close();
+  void dispose() {
+    _client.close();
+    if (_ownsHttpClientWrapper) _httpClientWrapper.close();
+  }
 }
